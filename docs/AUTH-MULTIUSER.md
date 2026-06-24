@@ -30,38 +30,43 @@ Cada `USER` solo puede ver y modificar sus propios datos financieros. No existe 
 
 ## Fases de implementación
 
-### 9.1 — Schema y auth base (actual)
+### 9.1 — Schema y auth base ✅
 - [x] UserRole enum (SUPER_ADMIN, USER)
 - [x] User.passwordHash, role, isActive, lastLoginAt
 - [x] bcryptjs para hashing
 - [x] Auth service: validateUserCredentials
-- [x] Current-user helper (temporal, usa demo user)
+- [x] Current-user helper con sesión real
 - [x] Seed con admin + demo user hasheados
 
-### 9.2 — Login, logout, sesión segura
-- [ ] Página /login
-- [ ] JWT con jose + HTTP-only cookies
-- [ ] Middleware de protección de rutas
-- [ ] getCurrentUser desde sesión real
-- [ ] Logout endpoint
-- [ ] Redirect no autenticados a /login
+### 9.2 — Login, logout, sesión segura ✅
+- [x] Página /login con dark mode
+- [x] JWT con jose + HTTP-only cookies
+- [x] proxy.ts (Next.js 16) protección de rutas
+- [x] getCurrentUser desde sesión JWT real
+- [x] Logout endpoint + botón sidebar
+- [x] Redirect no autenticados a /login
 
-### 9.3 — Panel admin de usuarios
-- [ ] Página /admin/users (solo SUPER_ADMIN)
-- [ ] Crear usuario
-- [ ] Activar/desactivar usuario
-- [ ] Lista de usuarios
-- [ ] No acceso a datos financieros de otros
+### 9.3 — Panel admin de usuarios ✅
+- [x] Página /admin/users (solo SUPER_ADMIN)
+- [x] Crear usuario (role USER)
+- [x] Activar/desactivar usuario con guards
+- [x] Lista de usuarios sin passwordHash
+- [x] SUPER_ADMIN no ve datos financieros
 
-### 9.4 — Aislamiento userId en todos los services
-- [ ] Reemplazar getDemoUser() por requireCurrentUser()
-- [ ] Auditar cada service para usar userId del usuario autenticado
-- [ ] Verificar que CSV export filtra por userId
-- [ ] Verificar dashboard, reports, settings por userId
+### 9.4 — Aislamiento userId en todos los services ✅
+- [x] getDemoUser() delega a requireCurrentUser()
+- [x] Dashboard service corregido (no hardcodea email)
+- [x] Todos los services filtran por userId autenticado
+- [x] CSV export filtra por userId
+- [x] Ownership helpers creados
+- [x] Verificado: usuario test ve 0 data, demo ve su data
 
-### 9.5 — Pruebas cruzadas
-- [ ] Crear usuario A y usuario B
-- [ ] Verificar que A no ve datos de B
+### 9.5 — Hardening ✅
+- [x] JWT_SECRET validado en producción (no permite fallback inseguro)
+- [x] Rate limit in-memory en login (5 intentos / 15 min)
+- [x] Pruebas cruzadas: A no ve datos de B
+- [x] SUPER_ADMIN no ve finanzas
+- [x] Usuario inactivo bloqueado
 - [ ] Verificar que SUPER_ADMIN no ve finanzas privadas
 - [ ] Verificar que usuario desactivado no puede acceder
 

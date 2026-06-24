@@ -2,8 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { loginSchema } from "@/features/auth/auth.schema";
 import { validateUserCredentials } from "@/features/auth/auth.service";
 import { createSession } from "@/lib/session";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "unknown";
+  const rateCheck = checkRateLimit(`login:${ip}`);
+
+  if (!rateCheck.allowed) {
+    return NextResponse.json(
+      { error: `Demasiados intentos. Intenta de nuevo en ${rateCheck.retryAfterSeconds} segundos.` },
+      { status: 429 }
+    );
+  }
+
   const body = await request.json();
   const parsed = loginSchema.safeParse(body);
 

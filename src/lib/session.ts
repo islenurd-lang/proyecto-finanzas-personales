@@ -2,7 +2,14 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
 const SESSION_COOKIE = "session";
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "dev-secret-change-me");
+
+function getSecret() {
+  const secret = process.env.JWT_SECRET;
+  if (process.env.NODE_ENV === "production" && (!secret || secret === "change-me-in-future" || secret === "dev-secret-change-me")) {
+    throw new Error("JWT_SECRET must be set to a secure value in production");
+  }
+  return new TextEncoder().encode(secret || "dev-secret-change-me");
+}
 
 interface SessionPayload {
   userId: string;
@@ -15,7 +22,7 @@ export async function createSession(payload: SessionPayload): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(SECRET);
+    .sign(getSecret());
 
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, {
@@ -35,7 +42,7 @@ export async function verifySession(): Promise<SessionPayload | null> {
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, SECRET);
+    const { payload } = await jwtVerify(token, getSecret());
     return payload as unknown as SessionPayload;
   } catch {
     return null;
