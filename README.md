@@ -108,6 +108,23 @@ GET /api/export/transactions?type=EXPENSE&categoryId=xxx&dateFrom=2026-06-01&dat
 
 Retorna `text/csv` con columnas: Fecha, Tipo, Estado, Cuenta Origen, Cuenta Destino, Categoría, Descripción, Monto, Moneda.
 
+## Autenticación y Multiusuario (en implementación)
+
+El sistema incluye base de autenticación multiusuario:
+
+| Rol | Email | Password |
+|---|---|---|
+| SUPER_ADMIN | admin@finanzas.local | Admin123! |
+| USER | demo@finanzas.local | Demo123! |
+
+> Estas credenciales son para **desarrollo local**. En producción deben cambiarse.
+
+- Passwords hasheados con bcryptjs
+- Roles: SUPER_ADMIN (administra usuarios) y USER (usa finanzas)
+- Cada usuario solo ve sus propios datos
+- Login/sesión real en implementación (Fase 9.2)
+- Ver [docs/AUTH-MULTIUSER.md](docs/AUTH-MULTIUSER.md) para estrategia completa
+
 ## Seguridad
 
 - No se conectan bancos ni APIs financieras reales

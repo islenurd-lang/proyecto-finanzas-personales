@@ -46,17 +46,26 @@ enum Theme {
   SYSTEM
 }
 
+enum UserRole {
+  SUPER_ADMIN
+  USER
+}
+
 // ─── Models ───
 
 model User {
-  id                String   @id @default(cuid())
+  id                String    @id @default(cuid())
   name              String
-  email             String   @unique
-  preferredCurrency String   @default("DOP")
-  dateFormat         String   @default("dd/MM/yyyy")
-  theme             Theme    @default(SYSTEM)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  email             String    @unique
+  passwordHash      String    @default("")
+  role              UserRole  @default(USER)
+  isActive          Boolean   @default(true)
+  lastLoginAt       DateTime?
+  preferredCurrency String    @default("DOP")
+  dateFormat         String    @default("dd/MM/yyyy")
+  theme             Theme     @default(SYSTEM)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   accounts     Account[]
   categories   Category[]
