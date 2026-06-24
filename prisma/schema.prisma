@@ -4,10 +4,10 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
-// ─── Enums (SQLite stores as strings) ───
+// ─── Enums ───
 
 enum AccountType {
   CASH

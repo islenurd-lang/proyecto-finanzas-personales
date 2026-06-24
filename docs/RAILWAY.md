@@ -1,91 +1,94 @@
-# Deploy en Railway — Guía futura
-
-> Estado: preparación documentada. No desplegado todavía.
+# Deploy en Railway
 
 ## Requisitos previos
 
 - Cuenta en [Railway](https://railway.app)
-- Repositorio en GitHub conectado
-- MVP local funcionando con `npm run build` exitoso
+- Repositorio en GitHub
+- Rama `chore/railway-postgres-auth-readiness` o main con PostgreSQL
 
-## Pasos para deploy
+## Deploy paso a paso
 
 ### 1. Crear proyecto en Railway
 
-- Ir a Railway Dashboard
-- New Project → Deploy from GitHub repo
-- Seleccionar el repositorio
+Railway Dashboard → New Project → Deploy from GitHub repo → seleccionar `proyecto-finanzas-personales`
 
 ### 2. Agregar PostgreSQL
 
-- En el proyecto, agregar servicio → PostgreSQL
-- Railway genera automáticamente `DATABASE_URL`
+Add Service → PostgreSQL → Railway genera `DATABASE_URL` automáticamente
 
-### 3. Migrar de SQLite a PostgreSQL
+### 3. Configurar variables de entorno
 
-Antes de deploy, actualizar el proyecto:
-
-1. Cambiar `provider` en `prisma/schema.prisma`:
-   ```prisma
-   datasource db {
-     provider = "postgresql"
-   }
-   ```
-
-2. Cambiar adapter en `src/lib/prisma.ts` y `prisma/seed.ts`:
-   - De `@prisma/adapter-libsql` a `@prisma/adapter-pg`
-   - Instalar: `npm install @prisma/adapter-pg pg`
-
-3. Generar nueva migración:
-   ```bash
-   npx prisma migrate dev --name migrate-to-postgres
-   ```
-
-### 4. Configurar variables de entorno
-
-En Railway Settings → Variables:
+Settings → Variables:
 
 | Variable | Valor |
 |---|---|
-| `DATABASE_URL` | (automático de Railway PostgreSQL) |
+| `DATABASE_URL` | Automático desde PostgreSQL service |
+| `JWT_SECRET` | Generar valor seguro: `openssl rand -base64 32` |
 | `APP_URL` | URL del servicio Railway |
-| `JWT_SECRET` | Generar valor seguro cuando se implemente auth |
 
-### 5. Configurar build/start
+### 4. Deploy automático
 
-En Railway Settings:
+`railway.json` configura:
 
-- **Build Command:** `npm run build`
-- **Start Command:** `npm run start`
+- **Build:** `npm run build` (incluye `postinstall: prisma generate`)
+- **Pre-deploy:** `npm run db:deploy` (ejecuta `prisma migrate deploy`)
+- **Start:** `npm run start`
+- **Health check:** `/api/health`
 
-### 6. Ejecutar migraciones
+### 5. Seed inicial (primera vez)
 
-En Railway terminal o como release command:
-
-```bash
-npx prisma migrate deploy
-```
-
-### 7. Seed inicial (opcional)
+En Railway terminal:
 
 ```bash
 npx prisma db seed
 ```
 
-### 8. Verificar
+Esto crea:
+- admin@finanzas.local (SUPER_ADMIN) / Admin123!
+- demo@finanzas.local (USER) / Demo123!
 
-- Abrir URL del servicio
-- Verificar `GET /api/health` responde `{"status":"ok"}`
-- Verificar dashboard carga con datos
+> ⚠️ Cambiar credenciales antes de uso comercial real.
 
-### 9. Dominio personalizado (opcional)
+### 6. Verificar
 
-- En Settings → Networking → Custom Domain
-- Configurar DNS
+1. `GET /api/health` → `{"status":"ok","app":"Proyecto Finanzas Personales"}`
+2. Abrir `/login`
+3. Login como admin → ver `/admin/users`
+4. Login como demo → ver `/dashboard` con datos
+5. Verificar que admin no ve datos financieros
+6. Verificar logout funciona
 
-## Notas
+### 7. Dominio personalizado
 
-- El MVP actual usa SQLite local; PostgreSQL requiere cambios en adapter y provider
+Settings → Networking → Custom Domain → Configurar DNS
+
+## Arquitectura
+
+```
+GitHub Push → Railway Build (npm run build)
+           → Pre-deploy (prisma migrate deploy)
+           → Start (npm run start)
+                    ↓
+            PostgreSQL (Railway)
+                    ↓
+            /api/health ← Health check
+```
+
+## Funcionalidad incluida
+
+- Autenticación JWT con cookies HTTP-only
+- Roles: SUPER_ADMIN (admin usuarios) / USER (finanzas)
+- Aislamiento de datos por userId
+- Rate limiting en login
+- 11 módulos financieros
+- Export CSV protegido por sesión
+- Dark mode
+- Responsive
+
+## Seguridad
+
+- `JWT_SECRET` debe ser único y seguro en producción
 - No subir `.env` al repositorio
-- Usar variables de entorno de Railway para secretos
-- `postinstall` ejecuta `prisma generate` automáticamente en deploy
+- `postinstall` ejecuta `prisma generate` automáticamente
+- Credenciales demo deben cambiarse antes de producción comercial
+- passwordHash nunca se expone al frontend
