@@ -1,0 +1,243 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─── Enums (SQLite stores as strings) ───
+
+enum AccountType {
+  CASH
+  BANK
+  CREDIT_CARD
+  SAVINGS
+  LOAN
+  CUSTOM
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum TransactionStatus {
+  CONFIRMED
+  PENDING
+}
+
+enum DebtStatus {
+  ACTIVE
+  PAID
+  OVERDUE
+}
+
+enum Theme {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+// ─── Models ───
+
+model User {
+  id                String   @id @default(cuid())
+  name              String
+  email             String   @unique
+  preferredCurrency String   @default("DOP")
+  dateFormat         String   @default("dd/MM/yyyy")
+  theme             Theme    @default(SYSTEM)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  accounts     Account[]
+  categories   Category[]
+  transactions Transaction[]
+  budgets      Budget[]
+  savingGoals  SavingGoal[]
+  debts        Debt[]
+  tags         Tag[]
+  appSetting   AppSetting?
+}
+
+model Account {
+  id                 String      @id @default(cuid())
+  userId             String
+  name               String
+  type               AccountType @default(BANK)
+  initialBalanceCents Int        @default(0)
+  currency           String      @default("DOP")
+  isActive           Boolean     @default(true)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  user                    User          @relation(fields: [userId], references: [id])
+  outgoingTransactions    Transaction[] @relation("SourceAccount")
+  incomingTransactions    Transaction[] @relation("DestinationAccount")
+  savingGoals             SavingGoal[]
+
+  @@index([userId])
+}
+
+model Category {
+  id        String       @id @default(cuid())
+  userId    String?
+  name      String
+  type      CategoryType
+  color     String       @default("#6B7280")
+  icon      String       @default("circle")
+  isDefault Boolean      @default(false)
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user         User?         @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@index([userId, type])
+}
+
+model Transaction {
+  id                   String            @id @default(cuid())
+  userId               String
+  type                 TransactionType
+  amountCents          Int
+  date                 DateTime
+  sourceAccountId      String?
+  destinationAccountId String?
+  categoryId           String?
+  description          String?
+  status               TransactionStatus @default(CONFIRMED)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  user               User      @relation(fields: [userId], references: [id])
+  sourceAccount      Account?  @relation("SourceAccount", fields: [sourceAccountId], references: [id])
+  destinationAccount Account?  @relation("DestinationAccount", fields: [destinationAccountId], references: [id])
+  category           Category? @relation(fields: [categoryId], references: [id])
+  debtPayments       DebtPayment[]
+  transactionTags    TransactionTag[]
+
+  @@index([userId, date])
+  @@index([userId, type])
+  @@index([sourceAccountId])
+  @@index([destinationAccountId])
+  @@index([categoryId])
+  @@index([userId, status])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  color     String?
+  createdAt DateTime @default(now())
+
+  user            User             @relation(fields: [userId], references: [id])
+  transactionTags TransactionTag[]
+
+  @@unique([userId, name])
+  @@index([userId, name])
+}
+
+model TransactionTag {
+  id            String @id @default(cuid())
+  transactionId String
+  tagId         String
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  tag         Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([transactionId, tagId])
+  @@index([transactionId, tagId])
+}
+
+model Budget {
+  id              String   @id @default(cuid())
+  userId          String
+  categoryId      String
+  month           Int
+  year            Int
+  limitAmountCents Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([userId, categoryId, month, year])
+  @@index([userId, categoryId, year, month])
+}
+
+model SavingGoal {
+  id                String    @id @default(cuid())
+  userId            String
+  accountId         String?
+  name              String
+  targetAmountCents Int
+  currentAmountCents Int      @default(0)
+  targetDate        DateTime?
+  isCompleted       Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id])
+  account Account? @relation(fields: [accountId], references: [id])
+
+  @@index([userId])
+}
+
+model Debt {
+  id                  String     @id @default(cuid())
+  userId              String
+  creditorName        String
+  originalAmountCents Int
+  currentBalanceCents Int
+  interestRate        Float?
+  monthlyPaymentCents Int
+  dueDate             DateTime
+  status              DebtStatus @default(ACTIVE)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id])
+  payments DebtPayment[]
+
+  @@index([userId, status])
+  @@index([userId, dueDate])
+}
+
+model DebtPayment {
+  id            String   @id @default(cuid())
+  debtId        String
+  transactionId String?
+  amountCents   Int
+  paymentDate   DateTime
+  createdAt     DateTime @default(now())
+
+  debt        Debt         @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@index([debtId])
+}
+
+model AppSetting {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  primaryCurrency String   @default("DOP")
+  dateFormat      String   @default("dd/MM/yyyy")
+  theme           Theme    @default(SYSTEM)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
