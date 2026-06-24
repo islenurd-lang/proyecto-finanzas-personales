@@ -32,15 +32,14 @@ export default async function AdminPage() {
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Gestión de Usuarios</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-            La gestión completa de usuarios (crear, activar, desactivar) se implementará en Fase 9.3.
+            Administra los usuarios del sistema: crea, activa y desactiva cuentas.
           </p>
-          <div className="bg-navy-50 dark:bg-navy-900/30 rounded-lg p-4 text-sm text-navy-700 dark:text-navy-300">
-            <p className="font-medium mb-1">Usuarios actuales del sistema:</p>
-            <ul className="list-disc list-inside space-y-1 text-xs">
-              <li>admin@finanzas.local — SUPER_ADMIN</li>
-              <li>demo@finanzas.local — USER</li>
-            </ul>
-          </div>
+          <a
+            href="/admin/users"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-navy-600 text-white text-sm font-medium rounded-lg hover:bg-navy-700 transition-colors"
+          >
+            Ir a Gestión de Usuarios →
+          </a>
         </div>
 
         <div className="mt-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
