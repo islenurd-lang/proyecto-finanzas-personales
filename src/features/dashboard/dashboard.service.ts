@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { DEMO_USER_EMAIL } from "@/lib/demo-user";
+import { getDemoUser } from "@/lib/demo-user";
 import { getCurrentMonthRange, getCurrentMonth, getCurrentYear } from "@/lib/dates";
 import {
   calculateAccountBalance,
@@ -10,10 +10,7 @@ import {
 } from "@/lib/calculations";
 
 export async function getDashboardData() {
-  const user = await prisma.user.findUnique({
-    where: { email: DEMO_USER_EMAIL },
-  });
-  if (!user) throw new Error("Demo user not found");
+  const user = await getDemoUser();
 
   const { start, end } = getCurrentMonthRange();
   const currentMonth = getCurrentMonth();
