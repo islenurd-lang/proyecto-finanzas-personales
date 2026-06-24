@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTransactionsForCsvExport } from "@/features/reports/report.service";
 import { buildCsv } from "@/lib/csv";
+import { getCurrentUser } from "@/lib/current-user";
 
 const VALID_TYPES = ["INCOME", "EXPENSE", "TRANSFER"];
 const VALID_STATUSES = ["CONFIRMED", "PENDING"];
 
 export async function GET(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  }
   const params = request.nextUrl.searchParams;
 
   const rawType = params.get("type") ?? undefined;

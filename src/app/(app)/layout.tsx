@@ -9,6 +9,7 @@ export default async function AppGroupLayout({
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  if (user.role === "SUPER_ADMIN") redirect("/admin");
 
   return <AppLayout userName={user.name} userEmail={user.email} userRole={user.role}>{children}</AppLayout>;
 }
