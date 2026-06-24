@@ -13,7 +13,7 @@ export async function getAppSettings() {
         userId: user.id,
         primaryCurrency: user.preferredCurrency,
         dateFormat: user.dateFormat,
-        theme: user.theme,
+        theme: user.theme as Theme,
       },
     });
   }

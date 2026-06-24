@@ -1,9 +1,14 @@
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/current-user";
 import AppLayout from "@/components/layout/app-layout";
 
-export default function AppGroupLayout({
+export default async function AppGroupLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <AppLayout>{children}</AppLayout>;
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  return <AppLayout userName={user.name} userEmail={user.email} userRole={user.role}>{children}</AppLayout>;
 }

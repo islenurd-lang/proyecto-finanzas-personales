@@ -1,12 +1,13 @@
 import { prisma } from "./prisma";
+import { verifySession } from "./session";
 import type { SafeUser } from "@/features/auth/auth.types";
 
-const DEMO_USER_EMAIL = "demo@finanzas.local";
-
 export async function getCurrentUser(): Promise<SafeUser | null> {
-  // TODO: Replace with real session in Fase 9.2
+  const session = await verifySession();
+  if (!session) return null;
+
   const user = await prisma.user.findUnique({
-    where: { email: DEMO_USER_EMAIL },
+    where: { id: session.userId },
   });
   if (!user || !user.isActive) return null;
 
